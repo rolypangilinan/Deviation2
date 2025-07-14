@@ -39,7 +39,13 @@ emptyColumn = [
     "AVE V_MAX PASS",
     "DEV V_MAX PASS",
     "WATTAGE MAX (W)",
-    "CLOSED PRESSURE_MAX (kPa)"
+    "WATTAGE MAX PASS",
+    "AVE WATTAGE MAX (W)",
+    "DEV WATTAGE MAX (W)",
+    "CLOSED PRESSURE_MAX (kPa)",
+    "CLOSED PRESSURE_MAX PASS",
+    "AVE CLOSED PRESSURE (kPa)",
+    "DEV CLOSED PRESSURE (kPa)"
     
 
 ]
@@ -95,7 +101,7 @@ for a in range(len(df)):
     if tempdf["PASS/NG"].values[0] == 1:
         dataFrame["WATTAGE MAX PASS"] = tempdf["WATTAGE MAX (W)"].values[0]
     if tempdf["PASS/NG"].values[0] == 1:
-        dataFrame["CLOSED PRESSURE MAX PASS"] = tempdf["CLOSED PRESSURE_MAX (kPa)"].values[0]
+        dataFrame["CLOSED PRESSURE_MAX PASS"] = tempdf["CLOSED PRESSURE_MAX (kPa)"].values[0]
 
     dataList.append(dataFrame)
 
@@ -120,38 +126,39 @@ for model, group in compiledFrame.groupby('MODEL CODE'):
         print(f" Skipping {model}: No past data")
         continue
 
+    # PASS DISPLAY (compiledFrame)
     latest_date = past_data['DATE'].max()
     latest_rows = past_data[past_data['DATE'] == latest_date]
     pass_avg = latest_rows['V_MAX PASS'].mean()
-    wattage_avg = latest_rows["WATTAGE MAX (W)"].mean()
-    closedPressure_avg = latest_rows["CLOSED PRESSURE_MAX (kPa)"].mean()
+    wattage_avg = latest_rows["WATTAGE MAX PASS"].mean()
+    closedPressure_avg = latest_rows["CLOSED PRESSURE_MAX PASS"].mean()
 
     results.append({
         'MODEL CODE': model,
         'LATEST DATE': latest_date.date(),
         'V-MAX PASS AVG': pass_avg,
         'WATTAGE MAX AVG': wattage_avg,
-        'CLOSED PRESSURE_MAX (kPa)': closedPressure_avg
+        'CLOSED PRESSURE_MAX AVG': closedPressure_avg
     })
-
+# AVERAGE DISPLAY (model_summary)
 model_summary = pd.DataFrame(results)
 pass_avg_map = model_summary.set_index("MODEL CODE")["V-MAX PASS AVG"].to_dict()
 wattage_avg_map = model_summary.set_index("MODEL CODE")["WATTAGE MAX AVG"].to_dict()
-closedPressure_avg_map = model_summary.set_index("MODEL CODE")["CLOSED PRESSURE_MAX (kPa)"].to_dict()
+closedPressure_avg_map = model_summary.set_index("MODEL CODE")["CLOSED PRESSURE_MAX AVG"].to_dict()
 
-# --- Now inject AVE V_MAX PASS ---
+# --- Now inject AVE V_MAX PASS ---AVERAGE DISPLAY (compiledFrame)
 compiledFrame["AVE V_MAX PASS"] = compiledFrame["MODEL CODE"].map(pass_avg_map)
 compiledFrame["AVE WATTAGE MAX (W)"] = compiledFrame["MODEL CODE"].map(wattage_avg_map)
 compiledFrame["AVE CLOSED PRESSURE (kPa)"] = compiledFrame["MODEL CODE"].map(closedPressure_avg_map)
 
-# --- Compute DEV V_MAX PASS ---
+# --- Compute DEV V_MAX PASS --- (compiledFrame)
 compiledFrame["DEV V_MAX PASS"] = (
     (compiledFrame["AVE V_MAX PASS"] - compiledFrame["V_MAX PASS"]) / compiledFrame["AVE V_MAX PASS"]
 )
 compiledFrame["DEV WATTAGE MAX (W)"] = (
     (compiledFrame["AVE WATTAGE MAX (W)"] - compiledFrame["WATTAGE MAX (W)"]) / compiledFrame["AVE WATTAGE MAX (W)"]
 )
-compiledFrame["DEV CLOSED PRESSURE (W)"] = (
+compiledFrame["DEV CLOSED PRESSURE (kPa)"] = (
     (compiledFrame["AVE CLOSED PRESSURE (kPa)"] - compiledFrame["CLOSED PRESSURE_MAX (kPa)"]) / compiledFrame["AVE CLOSED PRESSURE (kPa)"]
 )
 
