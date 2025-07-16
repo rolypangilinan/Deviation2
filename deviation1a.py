@@ -123,7 +123,8 @@ compiledFrame = pd.DataFrame(columns=emptyColumn)
 # df = df.merge(group_counts[['MODEL CODE', 'DATE']], on=['MODEL CODE', 'DATE'], how='inner')
 
 
-
+# NO NEED TO EDIT (CONSTANT)
+# --- CLEANING before loop ---
 df['S/N'] = df['S/N'].astype(str)
 df['MODEL CODE'] = df['MODEL CODE'].astype(str)
 df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
