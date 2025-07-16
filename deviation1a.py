@@ -11,11 +11,12 @@ from datetime import datetime
 
 dataList = []
 
-pd.set_option('display.max_columns', None)
-pd.set_option('display.max_rows', None)
+# pd.set_option('display.max_columns', None)
+# pd.set_option('display.max_rows', None)
 
 # --- Load data ---
 file_path = r"\\192.168.2.19\ai_team\AI Program\Outputs\CompiledPiMachine\CompiledPIMachine.csv"
+# file_path = r"\\192.168.2.19\ai_team\INDIVIDUAL FOLDER\Jed-san\JHUN DEVIATION\CompiledPIMachine.csv"
 # uclLclFile = pd.read_excel('UCL_LCL.xlsx', sheet_name='Sheet1')
 
 df = pd.read_csv(file_path, encoding='latin1')
@@ -40,61 +41,61 @@ emptyColumn = [
     "V_MAX PASS", 
     "AVE V_MAX PASS",                   #'V-MAX PASS AVG'
     "DEV V_MAX PASS",
-    "VOLTAGE MAX OOT",
+    # "VOLTAGE MAX OOT",
 
     "WATTAGE MAX (W)",
     "WATTAGE MAX PASS",
     "AVE WATTAGE MAX (W)",                  #'WATTAGE MAX AVG'
     "DEV WATTAGE MAX (W)",
-    "WATTAGE MAX OOT",
+    # "WATTAGE MAX OOT",
 
     "CLOSED PRESSURE_MAX (kPa)",
     "CLOSED PRESSURE_MAX PASS",
     "AVE CLOSED PRESSURE_MAX (kPa)",        #'CLOSED PRESSURE_MAX AVG'
     "DEV CLOSED PRESSURE_MAX (kPa)", 
-    "CLOSED PRESSURE_MAX OOT",
+    # "CLOSED PRESSURE_MAX OOT",
 
     "VOLTAGE Middle (V)",
     "VOLTAGE Middle PASS",                  #"VOLTAGE Middle AVG"
     "AVE VOLTAGE Middle (V)",
     "DEV VOLTAGE Middle (V)",
-    "VOLTAGE Middle OOT",
+    # "VOLTAGE Middle OOT",
 
     "WATTAGE Middle (W)",
     "WATTAGE Middle (W) PASS",              #"WATTAGE Middle AVG"
     "AVE WATTAGE Middle (W)",
     "DEV WATTAGE Middle (W)",
-    "WATTAGE Middle OOT",
+    # "WATTAGE Middle OOT",
 
     "AMPERAGE Middle (A)",
     "AMPERAGE Middle (A) PASS",             #"AMPERAGE Middle AVG"
     "AVE AMPERAGE Middle (A)",
     "DEV AMPERAGE Middle (A)",
-    "AMPERAGE Middle OOT",
+    # "AMPERAGE Middle OOT",
 
     "CLOSED PRESSURE Middle (kPa)",
     "CLOSED PRESSURE Middle (kPa) PASS",    #"CLOSED PRESSURE Middle AVG"
     "AVE CLOSED PRESSURE Middle (kPa)",
     "DEV CLOSED PRESSURE Middle (kPa)",
-    "CLOSED PRESSURE Middle OOT",
+    # "CLOSED PRESSURE Middle OOT",
 
     "VOLTAGE MIN (V)",
     "VOLTAGE MIN (V) PASS",                 #"VOLTAGE MIN (V) AVG"
     "AVE VOLTAGE MIN (V)",
     "DEV VOLTAGE MIN (V)",
-    "VOLTAGE MIN OOT",
+    # "VOLTAGE MIN OOT",
 
     "WATTAGE MIN (W)",
     "WATTAGE MIN (W) PASS",                 #"WATTAGE MIN AVG"
     "AVE WATTAGE MIN (W)",
     "DEV WATTAGE MIN (W)",
-    "WATTAGE MIN OOT",
+    # "WATTAGE MIN OOT",
 
     "CLOSED PRESSURE MIN (kPa)",
     "CLOSED PRESSURE MIN (kPa) PASS",       #"CLOSED PRESSURE MIN AVG"
     "AVE CLOSED PRESSURE MIN (kPa)",
-    "DEV CLOSED PRESSURE MIN (kPa)",
-    "CLOSED PRESSURE MIN OOT"
+    "DEV CLOSED PRESSURE MIN (kPa)"
+    # "CLOSED PRESSURE MIN OOT"
 
 ]
 compiledFrame = pd.DataFrame(columns=emptyColumn)
@@ -107,6 +108,22 @@ compiledFrame = pd.DataFrame(columns=emptyColumn)
 
 # NO NEED TO EDIT (CONSTANT)
 # --- CLEANING before loop ---
+# df['S/N'] = df['S/N'].astype(str)
+# df['MODEL CODE'] = df['MODEL CODE'].astype(str)
+# df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
+# df = df.dropna(subset=['DATE'])
+# df = df[df['S/N'].str.len() >= 8]
+# df = df[~df['MODEL CODE'].str.contains('M')]
+
+# group_counts = df.groupby(['MODEL CODE', 'DATE']).size().reset_index(name='COUNT')
+# valid_groups = group_counts[group_counts['COUNT'] >= 10][['MODEL CODE', 'DATE']]
+# df = df.merge(valid_groups, on=['MODEL CODE', 'DATE'], how='inner')
+
+# group_counts = df.groupby(['MODEL CODE', 'DATE']).size().reset_index(name='COUNT')
+# df = df.merge(group_counts[['MODEL CODE', 'DATE']], on=['MODEL CODE', 'DATE'], how='inner')
+
+
+
 df['S/N'] = df['S/N'].astype(str)
 df['MODEL CODE'] = df['MODEL CODE'].astype(str)
 df['DATE'] = pd.to_datetime(df['DATE'], errors='coerce')
@@ -114,12 +131,17 @@ df = df.dropna(subset=['DATE'])
 df = df[df['S/N'].str.len() >= 8]
 df = df[~df['MODEL CODE'].str.contains('M')]
 
+# Get today's date without time for comparison
+today = pd.Timestamp.now().normalize()
+
+# Group and count entries
 group_counts = df.groupby(['MODEL CODE', 'DATE']).size().reset_index(name='COUNT')
-valid_groups = group_counts[group_counts['COUNT'] >= 10][['MODEL CODE', 'DATE']]
+
+# Apply the COUNT >= 10 condition, but skip it for today
+valid_groups = group_counts[(group_counts['COUNT'] >= 10) | (group_counts['DATE'] == today)][['MODEL CODE', 'DATE']]
+
+# Merge back to original dataframe
 df = df.merge(valid_groups, on=['MODEL CODE', 'DATE'], how='inner')
-
-
-
 
 
 
@@ -240,15 +262,25 @@ closePressureMin_avg = model_summary.set_index("MODEL CODE")["CLOSED PRESSURE MI
 
 
 # --- Now inject  ---AVERAGE DISPLAY (compiledFrame)
+# 1
 compiledFrame["AVE V_MAX PASS"] = compiledFrame["MODEL CODE"].map(pass_avg_map)
+# 2
 compiledFrame["AVE WATTAGE MAX (W)"] = compiledFrame["MODEL CODE"].map(wattage_avg_map)
+# 3
 compiledFrame["AVE CLOSED PRESSURE_MAX (kPa)"] = compiledFrame["MODEL CODE"].map(closedPressure_avg_map)
+# 4
 compiledFrame["AVE VOLTAGE Middle (V)"] = compiledFrame["MODEL CODE"].map(voltageMiddle_avg_map)
+# 5
 compiledFrame["AVE WATTAGE Middle (W)"] = compiledFrame["MODEL CODE"].map(wattageMiddle_avg)
+# 6
 compiledFrame["AVE AMPERAGE Middle (A)"] = compiledFrame["MODEL CODE"].map(amperageMiddle_avg)
+# 7
 compiledFrame["AVE CLOSED PRESSURE Middle (kPa)"] = compiledFrame["MODEL CODE"].map(closePressureMiddle_avg)
+# 8
 compiledFrame["AVE VOLTAGE MIN (V)"] = compiledFrame["MODEL CODE"].map(voltageMin_avg)
+# 9
 compiledFrame["AVE WATTAGE MIN (W)"] = compiledFrame["MODEL CODE"].map(wattageMin_avg)
+# 10
 compiledFrame["AVE CLOSED PRESSURE MIN (kPa)"] = compiledFrame["MODEL CODE"].map(closePressureMin_avg)
 
 
